@@ -1,0 +1,84 @@
+cabal-version:       >=1.10
+
+name:                haskell-quoridor
+version:             1.0
+description:         Coursework 1 for Reasoning and Agents 2021 (University of Edinburgh).
+author:              Ramon Fernandez Mir
+maintainer:          Ramon Fernandez Mir <rfernandezmir@gmail.com>
+build-type:          Simple
+extra-source-files:  README.md
+
+library 
+  exposed-modules:
+    Action, 
+    Board, 
+    Cell, 
+    Constants, 
+    Game, 
+    Player, 
+    Print, 
+    Types, 
+    Players.Human, 
+    Players.Dumb,
+    Players.Minimax, 
+    Players.Reed
+  build-depends:
+    base >=4.13 && <4.14,
+    containers,
+    array
+  hs-source-dirs:
+    src
+  default-language:
+    Haskell2010
+
+executable haskell-quoridor
+  main-is:
+    Main.hs
+  build-depends:
+    base >=4.13 && <4.14,
+    haskell-quoridor,
+    containers,
+    array,
+    MonadRandom
+  hs-source-dirs:
+    src
+  default-language:
+    Haskell2010
+
+test-suite basic-tests
+  type:                
+    exitcode-stdio-1.0
+  main-is:
+    Main.hs
+  hs-source-dirs:
+    tests/Basic
+  build-depends: 
+    base >=4.13 && <4.14,
+    containers,
+    haskell-quoridor,
+    hspec,
+    hspec-discover,
+    hspec-contrib,
+    HUnit,
+    QuickCheck
+  default-language:
+    Haskell2010
+
+test-suite minimax-tests
+  type:                
+    exitcode-stdio-1.0
+  main-is:
+    Main.hs
+  hs-source-dirs:
+    tests/Minimax
+  build-depends: 
+    base >=4.13 && <4.14,
+    containers,
+    haskell-quoridor,
+    hspec,
+    hspec-discover,
+    hspec-contrib,
+    HUnit,
+    QuickCheck
+  default-language:
+    Haskell2010
