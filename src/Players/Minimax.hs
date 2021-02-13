@@ -59,7 +59,12 @@ negResult (Result x as) = Result (-x) as
 -- [Note: To speed things up, you may want to, at this stage, heuristically select which actions are 
 --  more relevant. In particular, you probably don't want to consider every single possible wall.]
 generateGameTree :: Game -> GameTree
-generateGameTree = undefined
+generateGameTree g = StateTree g deeperTree
+    where
+        deeperTree = [ (a, generateGameTree $ fromJust nextGame)
+                        | a <- validActions g,
+                        let nextGame = performAction g a,
+                        isJust nextGame ]
 
 {-
     *** PART I.b (5pt) ***
@@ -69,15 +74,21 @@ generateGameTree = undefined
     the depth of the tree.
 -}
 
+-- Sort tuples from the lowest to the highest
+sortTuples :: (Ord v) => [(a, StateTree v a)] -> [(a, StateTree v a)]
+sortTuples = sortBy (\(a, StateTree v1 a') (b, StateTree v2 b') -> compare v1 v2)
+
 -- Higher scoring nodes go first.
 -- [Hint: You should use 'lowFirst'.]
 highFirst :: (Ord v) => StateTree v a -> StateTree v a
-highFirst = undefined
+highFirst (StateTree v ts) = StateTree v [ (a, lowFirst t)
+                                            | (a, t) <- reverse $ sortTuples ts ] 
 
 -- Lower scoring nodes go first.
 -- [Hint: You should use 'highFirst'.]
 lowFirst :: (Ord v) => StateTree v a -> StateTree v a
-lowFirst = undefined
+lowFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
+                                            | (a, t) <- sortTuples ts ] 
 
 {-
     *** Part I.c (5pt) ***
