@@ -85,14 +85,16 @@ sortTuples = sortBy (\(a, StateTree v1 a') (b, StateTree v2 b') -> compare v1 v2
 -- Higher scoring nodes go first.
 -- [Hint: You should use 'lowFirst'.]
 highFirst :: (Ord v) => StateTree v a -> StateTree v a
-highFirst (StateTree v ts) = StateTree v [ (a, lowFirst t)
+highFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
                                             | (a, t) <- reverse $ sortTuples ts ] 
 
--- Lower scoring nodes go first.
--- [Hint: You should use 'highFirst'.]
-lowFirst :: (Ord v) => StateTree v a -> StateTree v a
-lowFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
-                                            | (a, t) <- sortTuples ts ] 
+-- NOTE: I only used highFirst in my implementation
+--
+-- -- Lower scoring nodes go first.
+-- -- [Hint: You should use 'highFirst'.]
+-- lowFirst :: (Ord v) => StateTree v a -> StateTree v a
+-- lowFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
+--                                             | (a, t) <- sortTuples ts ] 
 
 {-
     *** Part I.c (5pt) ***
