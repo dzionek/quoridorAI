@@ -138,47 +138,65 @@ pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
 
 -- Heuristic for A*, uses vertical straight line distance to winning positions.
-verticalHeuristic :: Cell -> Int
-verticalHeuristic (_, row) = boardSize - row
+verticalHeuristic :: Cell -> Row -> Int
+verticalHeuristic (_, row) winningRow = abs $ winningRow - row
 
 
 -- A* algorithm returning distance to one winning positions.
-aStar :: Board -> Cell -> Maybe Cost
-aStar b cell = aStar' Nothing queue b 
+aStar :: Cell -> Board -> Row -> Maybe Cost
+aStar cell = aStar' Nothing queue
     where
         -- Min-heap priority queue with priority cost+heuristic and payload cell + cost + history
         -- See Types.hs for reference.
         queue :: PriorityQueue
         queue = H.singleton $ H.Entry 0 (cell, 0, Set.empty)
 
-aStar' :: Maybe Cost -> PriorityQueue -> Board -> Maybe Cost
-aStar' (Just cost) _ _ = Just cost
-aStar' Nothing queue b
+aStar' :: Maybe Cost -> PriorityQueue -> Board -> Row -> Maybe Cost
+aStar' (Just cost) _ _ _ = Just cost
+aStar' Nothing queue b winningRow
     | H.null queue = Nothing
     | otherwise =
         if Set.member (cellToIndex (col, row)) history
-        then aStar' Nothing (H.deleteMin queue) b
+        then aStar' Nothing (H.deleteMin queue) b winningRow
         else
-            if row == boardSize
-            then aStar' (Just dist) queue b
-            else aStar' Nothing (addNextNodes (col, row) dist history (H.deleteMin queue) b) b
+            if row == winningRow
+            then aStar' (Just dist) queue b winningRow
+            else aStar' Nothing (addNextNodes (col, row) dist history (H.deleteMin queue) b winningRow) b winningRow
     where
         ((col, row), dist, history) = H.payload $ H.minimum queue
         
-addNextNodes :: Cell -> Cost -> History -> PriorityQueue -> Board -> PriorityQueue
-addNextNodes cell cost history queue b = foldr H.insert queue nextEntries
+addNextNodes :: Cell -> Cost -> History -> PriorityQueue -> Board -> Row -> PriorityQueue
+addNextNodes cell cost history queue b winningRow = foldr H.insert queue nextEntries
     where
         history' :: History
         history' = Set.insert (cellToIndex cell) history
 
         nextEntries :: [H.Entry Int Payload]
-        nextEntries = [ H.Entry (cost+1 + verticalHeuristic c) (c, cost+1, history')| c <- reachableCells b cell ]
+        nextEntries = [ H.Entry (cost+1 + verticalHeuristic c winningRow) (c, cost+1, history')| c <- reachableCells b cell ]
 
 utility :: Game -> Int 
-utility (Game b players) = -(fromJust $ aStar b playerCell)
+utility (Game b players) = - (fromJust (aStar playerCell b winningRow))
     where
         player = currentPlayer players
         playerCell = currentCell player
+        winningRow = snd $ head $ winningPositions player
+
+
+-- Extension: Utility function that also takes into account the other player.
+--
+-- utility :: Game -> Int 
+-- utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
+--     where
+--         player = currentPlayer players
+--         playerCell = currentCell player
+--         playerWinningRow = getWiningRow player
+--
+--         opponent = previousPlayer players
+--         opponentCell = currentCell opponent
+--         opponentWinningRow = getWiningRow opponent
+--       
+--         getWiningRow :: Player -> Row
+--         getWiningRow p = snd $ head $ winningPositions p
 
 
 -- Lifting the utility function to work on trees.
