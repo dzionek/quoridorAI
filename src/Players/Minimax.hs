@@ -102,7 +102,9 @@ lowFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
 -- exceeded. 
 -- [Hint: You may want to use guards and recursion.]
 pruneDepth :: Int -> StateTree v a -> StateTree v a
-pruneDepth = undefined
+pruneDepth n (StateTree v ts)
+    | n >= 1 = StateTree v [(a, pruneDepth (n-1) subTree) | (a, subTree) <- ts]
+    | otherwise = StateTree v []
 
 {-
     *** Part I.d (5pt) ***
@@ -115,7 +117,8 @@ pruneDepth = undefined
 -- every node. 
 -- [Hint: Use 'take'.]
 pruneBreadth :: Int -> StateTree v a -> StateTree v a
-pruneBreadth = undefined
+pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
+                                                    | (a, subTree) <- take n ts ]
 
 {-
     *** Part I.e (15pt) ***
@@ -131,6 +134,8 @@ pruneBreadth = undefined
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
 utility :: Game -> Int 
 utility = undefined
+    -- where
+    --     let player = currentPlayer players
 
 -- Lifting the utility function to work on trees.
 evalTree :: GameTree -> EvalTree 
