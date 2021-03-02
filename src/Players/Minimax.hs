@@ -21,6 +21,10 @@ import Player
 import Game
 import Players.Dumb (dumbAction)
 
+-- Additional imports
+import qualified Data.Heap as H
+import qualified Data.Set as Set
+
 {-
     StateTree util.
 -}
@@ -132,10 +136,50 @@ pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
 -- [Hint 1: You may want to calculate the distance between the player's current cell and its winning
 --  positions.]
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
+
+-- Heuristic for A*, uses vertical straight line distance to winning positions.
+verticalHeuristic :: Cell -> Int
+verticalHeuristic (_, row) = boardSize - row
+
+
+-- A* algorithm returning distance to one winning positions.
+aStar :: Board -> Cell -> Maybe Cost
+aStar b cell = aStar' Nothing queue b 
+    where
+        -- Min-heap priority queue with priority cost+heuristic and payload cell + cost + history
+        -- See Types.hs for reference.
+        queue :: PriorityQueue
+        queue = H.singleton $ H.Entry 0 (cell, 0, Set.empty)
+
+aStar' :: Maybe Cost -> PriorityQueue -> Board -> Maybe Cost
+aStar' (Just cost) _ _ = Just cost
+aStar' Nothing queue b
+    | H.null queue = Nothing
+    | otherwise =
+        if Set.member (cellToIndex (col, row)) history
+        then aStar' Nothing (H.deleteMin queue) b
+        else
+            if row == boardSize
+            then aStar' (Just dist) queue b
+            else aStar' Nothing (addNextNodes (col, row) dist history (H.deleteMin queue) b) b
+    where
+        ((col, row), dist, history) = H.payload $ H.minimum queue
+        
+addNextNodes :: Cell -> Cost -> History -> PriorityQueue -> Board -> PriorityQueue
+addNextNodes cell cost history queue b = foldr H.insert queue nextEntries
+    where
+        history' :: History
+        history' = Set.insert (cellToIndex cell) history
+
+        nextEntries :: [H.Entry Int Payload]
+        nextEntries = [ H.Entry (cost+1 + verticalHeuristic c) (c, cost+1, history')| c <- reachableCells b cell ]
+
 utility :: Game -> Int 
-utility = undefined
-    -- where
-    --     let player = currentPlayer players
+utility (Game b players) = -(fromJust $ aStar b playerCell)
+    where
+        player = currentPlayer players
+        playerCell = currentCell player
+
 
 -- Lifting the utility function to work on trees.
 evalTree :: GameTree -> EvalTree 

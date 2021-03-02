@@ -6,6 +6,8 @@
 module Types where 
 
 import Data.Graph
+import Data.Set (Set)
+import Data.Heap (Heap, Entry)
 
 {-
     Also see module Cell.
@@ -92,3 +94,10 @@ instance Eq Result where
 -- We can compare results by looking at the score.
 instance Ord Result where 
     compare (Result x _) (Result y _) = compare x y
+
+-- Additional types
+type Cost = Int
+type History = Set Index
+type Payload = (Cell, Cost, History)
+
+type PriorityQueue = Heap (Entry Int Payload)

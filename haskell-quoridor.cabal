@@ -23,9 +23,10 @@ library
     Players.Minimax, 
     Players.Reed
   build-depends:
-    base >=4.13 && <4.14,
+    base >=4.13,
     containers,
-    array
+    array,
+    heaps
   hs-source-dirs:
     src
   default-language:
@@ -35,11 +36,12 @@ executable haskell-quoridor
   main-is:
     Main.hs
   build-depends:
-    base >=4.13 && <4.14,
+    base >=4.13,
     haskell-quoridor,
     containers,
     array,
-    MonadRandom
+    MonadRandom,
+    heaps
   hs-source-dirs:
     src
   default-language:
@@ -53,14 +55,15 @@ test-suite basic-tests
   hs-source-dirs:
     tests/Basic
   build-depends: 
-    base >=4.13 && <4.14,
+    base >=4.13,
     containers,
     haskell-quoridor,
     hspec,
     hspec-discover,
     hspec-contrib,
     HUnit,
-    QuickCheck
+    QuickCheck,
+    heaps
   default-language:
     Haskell2010
 
@@ -72,13 +75,14 @@ test-suite minimax-tests
   hs-source-dirs:
     tests/Minimax
   build-depends: 
-    base >=4.13 && <4.14,
+    base >=4.13,
     containers,
     haskell-quoridor,
     hspec,
     hspec-discover,
     hspec-contrib,
     HUnit,
-    QuickCheck
+    QuickCheck,
+    heaps
   default-language:
     Haskell2010
