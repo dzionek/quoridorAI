@@ -11,6 +11,10 @@ import Action
 import Board 
 import Player 
 
+-- Additional imports
+import Data.Maybe ( fromJust, isJust )
+import AStar ( aStar, getWiningRow )
+
 {-
     'performAction' and helpers.
 -}
@@ -48,9 +52,26 @@ validWalls g = map Place (filter (validWallAction g) walls)
     where 
         walls = concat [[wallRight c, wallTop c] | c<-[(i, j) | i<-allColumns, j<-allRows]]
 
+-- Is it possible to finish a game for both players.
+playable :: Game -> [Action] -> [Action]
+playable g = filter (playable' . fromJust . performAction g)
+
+playable' :: Game -> Bool
+playable' (Game b players) =
+    isJust (aStar opponentCell b opponentWinningRow) &&
+    isJust (aStar playerCell b playerWinningRow)
+    where
+        player = currentPlayer players
+        playerCell = currentCell player
+        playerWinningRow = getWiningRow player
+
+        opponent = previousPlayer players
+        opponentCell = currentCell opponent
+        opponentWinningRow = getWiningRow opponent
+
 -- Generate all valid actions at a game state.
 validActions :: Game -> [Action]
-validActions g = (validSteps g) ++ (validWalls g)
+validActions g = playable g (validSteps g ++ validWalls g)
 
 -- Key function. Given a game and an action, checks the validity of the action and applies it to the
 -- game, generating a new game.

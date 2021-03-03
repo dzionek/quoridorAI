@@ -3,8 +3,8 @@ cabal-version:       >=1.10
 name:                haskell-quoridor
 version:             1.0
 description:         Coursework 1 for Reasoning and Agents 2021 (University of Edinburgh).
-author:              Ramon Fernandez Mir
-maintainer:          Ramon Fernandez Mir <rfernandezmir@gmail.com>
+author:              Ramon Fernandez Mir & Bartosz Dzionek
+maintainer:          Ramon Fernandez Mir <rfernandezmir@gmail.com> & Bartosz Dzionek <s1979360@ed.ac.uk>
 build-type:          Simple
 extra-source-files:  README.md
 
@@ -21,7 +21,8 @@ library
     Players.Human, 
     Players.Dumb,
     Players.Minimax, 
-    Players.Reed
+    Players.Reed,
+    AStar
   build-depends:
     base >=4.13,
     containers,

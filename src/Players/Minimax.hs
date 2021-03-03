@@ -22,8 +22,7 @@ import Game
 import Players.Dumb (dumbAction)
 
 -- Additional imports
-import qualified Data.Heap as H
-import qualified Data.Set as Set
+import AStar
 
 {-
     StateTree util.
@@ -86,7 +85,7 @@ sortTuples = sortBy (\(a, StateTree v1 a') (b, StateTree v2 b') -> compare v1 v2
 -- [Hint: You should use 'lowFirst'.]
 highFirst :: (Ord v) => StateTree v a -> StateTree v a
 highFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
-                                            | (a, t) <- reverse $ sortTuples ts ] 
+                                            | (a, t) <- sortTuples ts ] 
 
 -- NOTE: I only used highFirst in my implementation
 --
@@ -139,66 +138,29 @@ pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
 --  positions.]
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
 
--- Heuristic for A*, uses vertical straight line distance to winning positions.
-verticalHeuristic :: Cell -> Row -> Int
-verticalHeuristic (_, row) winningRow = abs $ winningRow - row
 
-
--- A* algorithm returning distance to one winning positions.
-aStar :: Cell -> Board -> Row -> Maybe Cost
-aStar cell = aStar' Nothing queue
-    where
-        -- Min-heap priority queue with priority cost+heuristic and payload cell + cost + history
-        -- See Types.hs for reference.
-        queue :: PriorityQueue
-        queue = H.singleton $ H.Entry 0 (cell, 0, Set.empty)
-
-aStar' :: Maybe Cost -> PriorityQueue -> Board -> Row -> Maybe Cost
-aStar' (Just cost) _ _ _ = Just cost
-aStar' Nothing queue b winningRow
-    | H.null queue = Nothing
-    | otherwise =
-        if Set.member (cellToIndex (col, row)) history
-        then aStar' Nothing (H.deleteMin queue) b winningRow
-        else
-            if row == winningRow
-            then aStar' (Just dist) queue b winningRow
-            else aStar' Nothing (addNextNodes (col, row) dist history (H.deleteMin queue) b winningRow) b winningRow
-    where
-        ((col, row), dist, history) = H.payload $ H.minimum queue
-        
-addNextNodes :: Cell -> Cost -> History -> PriorityQueue -> Board -> Row -> PriorityQueue
-addNextNodes cell cost history queue b winningRow = foldr H.insert queue nextEntries
-    where
-        history' :: History
-        history' = Set.insert (cellToIndex cell) history
-
-        nextEntries :: [H.Entry Int Payload]
-        nextEntries = [ H.Entry (cost+1 + verticalHeuristic c winningRow) (c, cost+1, history')| c <- reachableCells b cell ]
-
-utility :: Game -> Int 
-utility (Game b players) = - (fromJust (aStar playerCell b winningRow))
-    where
-        player = currentPlayer players
-        playerCell = currentCell player
-        winningRow = snd $ head $ winningPositions player
-
-
--- Extension: Utility function that also takes into account the other player.
---
 -- utility :: Game -> Int 
--- utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
+-- utility (Game b players) =
+--     case aStar playerCell b winningRow of
+--         Just a -> -a
+--         Nothing -> -100
 --     where
 --         player = currentPlayer players
 --         playerCell = currentCell player
---         playerWinningRow = getWiningRow player
---
---         opponent = previousPlayer players
---         opponentCell = currentCell opponent
---         opponentWinningRow = getWiningRow opponent
---       
---         getWiningRow :: Player -> Row
---         getWiningRow p = snd $ head $ winningPositions p
+--         winningRow = snd $ head $ winningPositions player
+
+-- Extension: Utility function that also takes into account the other player.
+
+utility :: Game -> Int 
+utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
+    where
+        player = currentPlayer players
+        playerCell = currentCell player
+        playerWinningRow = getWiningRow player
+
+        opponent = previousPlayer players
+        opponentCell = currentCell opponent
+        opponentWinningRow = getWiningRow opponent
 
 
 -- Lifting the utility function to work on trees.
@@ -217,7 +179,21 @@ evalTree = mapStateTree utility
 -- [Hint 1: Use a helper function to keep track of the highest and lowest scores.]
 -- [Hint 2: Use the 'Result' datatype.]
 minimaxFromTree :: EvalTree -> Action
-minimaxFromTree = undefined
+minimaxFromTree tree = head actions
+    where
+        (Result _ actions) = minimaxFromTree' [] tree 1
+
+    
+minimaxFromTree' :: [Action] -> EvalTree -> Int -> Result
+minimaxFromTree' doneActions (StateTree v []) _ = Result v doneActions
+minimaxFromTree' doneActions (StateTree _ remainingNodes) turn
+    | turn `mod` 2 == 1 = maximum deeperResults
+    | otherwise = minimum deeperResults
+    where
+        deeperResults = [
+                minimaxFromTree' (doneActions ++ [nextAction]) nextTree (turn+1)
+                | (nextAction, nextTree) <- remainingNodes
+            ]
 
 {-
     *** Part II (10pt) ***
