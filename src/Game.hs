@@ -42,22 +42,13 @@ validSteps g@(Game b ps) = map Move (filter (validStepAction g) steps)
     where  
         steps = let p = currentPlayer ps in makeSteps (currentCell p) (adjacentCells p)
 
--- A wall action is valid if the wall is valid and player has walls remaining.
-validWallAction :: Game -> Wall -> Bool 
-validWallAction (Game b ps) w = (hasWallsLeft (currentPlayer ps)) && (validWall b w)
 
--- Generate all valid walls at a game state.
-validWalls :: Game -> [Action]
-validWalls g = map Place (filter (validWallAction g) walls)
-    where 
-        walls = concat [[wallRight c, wallTop c] | c<-[(i, j) | i<-allColumns, j<-allRows]]
+---------------------------------------------------------------
+-------------------------- EXTENSION --------------------------
+---------------------------------------------------------------
 
--- Is it possible to finish a game for both players.
-playable :: Game -> [Action] -> [Action]
-playable g = filter (playable' . fromJust . performAction g)
-
-playable' :: Game -> Bool
-playable' (Game b players) =
+playable :: Game -> Bool
+playable (Game b players) =
     isJust (aStar opponentCell b opponentWinningRow) &&
     isJust (aStar playerCell b playerWinningRow)
     where
@@ -69,9 +60,24 @@ playable' (Game b players) =
         opponentCell = currentCell opponent
         opponentWinningRow = getWiningRow opponent
 
+-- A wall action is valid if the wall is valid and player has walls remaining.
+validWallAction :: Game -> Wall -> Bool 
+validWallAction (Game b ps) w = (hasWallsLeft (currentPlayer ps)) && (validWall b w) && playable (Game (placeWall b w) ps)
+
+---------------------------------------------------------------
+----------------------- END OF EXTENSION ----------------------
+---------------------------------------------------------------
+
+
+-- Generate all valid walls at a game state.
+validWalls :: Game -> [Action]
+validWalls g = map Place (filter (validWallAction g) walls)
+    where 
+        walls = concat [[wallRight c, wallTop c] | c<-[(i, j) | i<-allColumns, j<-allRows]]
+
 -- Generate all valid actions at a game state.
 validActions :: Game -> [Action]
-validActions g = playable g (validSteps g ++ validWalls g)
+validActions g = validSteps g ++ validWalls g
 
 -- Key function. Given a game and an action, checks the validity of the action and applies it to the
 -- game, generating a new game.

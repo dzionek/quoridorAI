@@ -6,10 +6,11 @@ module AStar where
 
 import qualified Data.Heap as H
 import qualified Data.Set as Set
+import Debug.Trace ( trace )
 
 import Types
-import Cell
-import Board
+import Cell ( cellToIndex )
+import Board ( reachableCells )
 
 getWiningRow :: Player -> Row
 getWiningRow p = snd $ head $ winningPositions p
@@ -19,7 +20,7 @@ verticalHeuristic :: Cell -> Row -> Int
 verticalHeuristic (_, row) winningRow = abs $ winningRow - row
 
 
--- A* algorithm returning distance to one winning positions.
+-- A* algorithm returning distance to one of the winning positions.
 aStar :: Cell -> Board -> Row -> Maybe Cost
 aStar cell = aStar' Nothing queue
     where

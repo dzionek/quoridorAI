@@ -23,6 +23,7 @@ import Players.Dumb (dumbAction)
 
 -- Additional imports
 import AStar
+import Debug.Trace (trace)
 
 {-
     StateTree util.
@@ -87,14 +88,6 @@ highFirst :: (Ord v) => StateTree v a -> StateTree v a
 highFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
                                             | (a, t) <- sortTuples ts ] 
 
--- NOTE: I only used highFirst in my implementation
---
--- -- Lower scoring nodes go first.
--- -- [Hint: You should use 'highFirst'.]
--- lowFirst :: (Ord v) => StateTree v a -> StateTree v a
--- lowFirst (StateTree v ts) = StateTree v [ (a, highFirst t)
---                                             | (a, t) <- sortTuples ts ] 
-
 {-
     *** Part I.c (5pt) ***
 
@@ -139,18 +132,6 @@ pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
 
 
--- utility :: Game -> Int 
--- utility (Game b players) =
---     case aStar playerCell b winningRow of
---         Just a -> -a
---         Nothing -> -100
---     where
---         player = currentPlayer players
---         playerCell = currentCell player
---         winningRow = snd $ head $ winningPositions player
-
--- Extension: Utility function that also takes into account the other player.
-
 utility :: Game -> Int 
 utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
     where
@@ -181,19 +162,20 @@ evalTree = mapStateTree utility
 minimaxFromTree :: EvalTree -> Action
 minimaxFromTree tree = head actions
     where
-        (Result _ actions) = minimaxFromTree' [] tree 1
+        (Result v actions) = minimaxFromTree' [] tree 0
 
     
 minimaxFromTree' :: [Action] -> EvalTree -> Int -> Result
 minimaxFromTree' doneActions (StateTree v []) _ = Result v doneActions
-minimaxFromTree' doneActions (StateTree _ remainingNodes) turn
-    | turn `mod` 2 == 1 = maximum deeperResults
-    | otherwise = minimum deeperResults
+minimaxFromTree' doneActions (StateTree _ remainingNodes) depth
+    | even depth = maximum deeperResults
+    | otherwise = negResult $ minimum deeperResults
     where
         deeperResults = [
-                minimaxFromTree' (doneActions ++ [nextAction]) nextTree (turn+1)
+                minimaxFromTree' (doneActions ++ [nextAction]) nextTree (depth+1)
                 | (nextAction, nextTree) <- remainingNodes
             ]
+
 
 {-
     *** Part II (10pt) ***
@@ -205,8 +187,46 @@ minimaxFromTree' doneActions (StateTree _ remainingNodes) turn
 -- Same as above but now use alpha-beta pruning.
 -- [Hint 1: Extend the helper function in I.e to keep track of alpha and beta.]
 -- [Hint 2: Use the 'Result' datatype.]
+inf :: Int
+inf = boardSize * boardSize
+
 minimaxABFromTree :: EvalTree -> Action
-minimaxABFromTree = undefined 
+minimaxABFromTree tree = head actions
+    where
+        (Result v actions) = minimaxABFromTree' [] tree (Result (-inf) []) (Result inf []) 0
+
+minimaxABFromTree' :: [Action] -> EvalTree -> Result -> Result -> Int -> Result
+minimaxABFromTree' doneActions (StateTree v []) alpha beta _ = alpha `max` Result v doneActions `min` beta
+minimaxABFromTree' doneActions (StateTree _ remainingNodes) alpha beta depth = maybePrune alpha beta remainingNodes
+    where
+        (Result alphaValue _) = alpha
+        maybePrune :: Result -> Result -> [(Action, EvalTree)] -> Result
+        maybePrune a b [] = Result alphaValue doneActions
+        maybePrune a b ((nextAction, nextTree):ts) | deeperAlpha == b   = deeperAlpha
+                       | otherwise = maybePrune deeperAlpha b ts
+            where
+                deeperAlpha :: Result
+                deeperAlpha
+                    | even depth = minimaxABFromTree' actions' nextTree a b (depth+1)
+                    | otherwise  = negResult $ minimaxABFromTree' actions' nextTree (negResult b) (negResult a) (depth+1)
+                    where
+                        actions' = doneActions ++ [nextAction]
+
+-- minimaxABFromTree :: EvalTree -> Action
+-- minimaxABFromTree tree = head actions
+--     where
+--         (Result _ actions) = minimaxABFromTree' [] (-inf) inf tree 1
+
+-- maxDeeperResults :: [(Action, EvalTree)] -> Int -> Int -> Int -> Result
+-- maxDeeperResults (t:ts) alpha beta turn = maxDeeperResults ts alpha beta (turn+1)
+-- maxDeeperResults [(, tree)] = Result Int [Action]
+
+-- minimaxABFromTree' :: [Action] -> Int -> Int -> EvalTree -> Int -> Result
+-- minimaxABFromTree' doneActions _ _ (StateTree v []) _ = Result v doneActions
+-- minimaxABFromTree' doneActions alpha beta (StateTree _ remainingNodes) turn
+--     | turn `mod` 2 == 1 = maxDeeperResults remainingNodes alpha beta turn
+
+
 
 {-
     Putting everything together.
@@ -223,7 +243,8 @@ breadth = 10
 -- Function that combines all the different parts implemented in Part I.
 minimax :: Game -> Action
 minimax =
-      minimaxFromTree -- or 'minimaxABFromTree'
+    --   minimaxFromTree -- or 'minimaxABFromTree'
+      minimaxABFromTree
     . pruneBreadth breadth
     . highFirst
     . evalTree
