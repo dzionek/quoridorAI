@@ -48,6 +48,8 @@ The module gives:
 
 The game need to be written in a comma-separated format, e.g. "e2,d9,e3,c9". Check Reed.txt for more examples.
 
+This evaluator is a great tool to analyze own games as well as explore possible openings.
+
 ### Better utility
 My extended utility is calculated not only with regard to the current player, but also the opponent. If you want to play my Minimax,
 or use my `Evaluator.hs` please use it instead of the basic one.
