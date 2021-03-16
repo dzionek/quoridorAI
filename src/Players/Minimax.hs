@@ -22,8 +22,7 @@ import Game
 import Players.Dumb (dumbAction)
 
 -- Additional imports
-import AStar
-import Debug.Trace (trace)
+import AStar ( getWiningRow, aStar )
 
 {-
     StateTree util.
@@ -82,8 +81,8 @@ generateGameTree g = StateTree g deeperTree
 sortTuples :: (Ord v) => [(a, StateTree v a)] -> [(a, StateTree v a)]
 sortTuples = sortBy (\(a, StateTree v1 a') (b, StateTree v2 b') -> compare v1 v2)
 
--- I used only lowFirst as discuessed on Piazza.
--- Lower scoring nodes go first.
+-- I used only lowFirst as discussed on Piazza (https://piazza.com/class/kfz9sb0lwid782?cid=160).
+-- This function ensures that lower scoring nodes go first.
 lowFirst :: (Ord v) => StateTree v a -> StateTree v a
 lowFirst (StateTree v ts) = StateTree v [ (a, lowFirst t)
                                             | (a, t) <- sortTuples ts ] 
@@ -132,7 +131,16 @@ pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
 --  positions.]
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
 
+-- Basic utility analyzing the shortest path to the winning position.
+-- utility :: Game -> Int 
+-- utility (Game b players) = - fromJust (aStar playerCell b playerWinningRow)
+--     where
+--         player = currentPlayer players
+--         playerCell = currentCell player
+--         playerWinningRow = getWiningRow player
 
+-- The improved utility balancing the distances of the current player and the other player.
+-- Please use this one to play and analyze.
 utility :: Game -> Int 
 utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
     where
@@ -165,7 +173,7 @@ minimaxFromTree tree = head actions
     where
         (Result _ actions) = minimaxFromTree' [] tree 0
 
-    
+-- Minimax takes max of children when the depth is even and min when it is odd.    
 minimaxFromTree' :: [Action] -> EvalTree -> Int -> Result
 minimaxFromTree' doneActions (StateTree v []) _ = Result v doneActions
 minimaxFromTree' doneActions (StateTree _ remainingNodes) depth
@@ -188,18 +196,27 @@ minimaxFromTree' doneActions (StateTree _ remainingNodes) depth
 -- Same as above but now use alpha-beta pruning.
 -- [Hint 1: Extend the helper function in I.e to keep track of alpha and beta.]
 -- [Hint 2: Use the 'Result' datatype.]
+
+-- Infinity is represented as the square of boardSize because the shortest path
+-- for any legal position will be always less than this number.
 inf :: Int
 inf = boardSize * boardSize
 
+-- Initialize Minimax setting alpha to -inf and beta to +inf.
 minimaxABFromTree :: EvalTree -> Action
-minimaxABFromTree tree = trace (show v) $ head actions
+minimaxABFromTree tree = head actions
     where
         (Result v actions) = minimaxABFromTree' [] tree (Result (-inf) []) (Result inf []) 0
 
+-- If the current node is a leaf, then just return its static evaluation. Otherwise, call abPrune on its children
+-- with the initial result 0 (note that this can be any number as this result will be changed anyway).
 minimaxABFromTree' :: [Action] -> EvalTree -> Result -> Result -> Int -> Result
 minimaxABFromTree' doneActions (StateTree v []) alpha beta _ = Result v doneActions
-minimaxABFromTree' doneActions (StateTree _ remainingNodes) alpha beta depth = abPrune doneActions (Result 99 []) alpha beta depth remainingNodes
+minimaxABFromTree' doneActions (StateTree _ remainingNodes) alpha beta depth = abPrune doneActions (Result 0 []) alpha beta depth remainingNodes
 
+-- On MAX nodes check if the result is greater than alpha, if it is then use it.
+-- On MIN nodes check if the result is less than beta, if it is then use it.
+-- Prune whenever alpha >= beta.
 abPrune :: [Action] -> Result -> Result -> Result -> Int -> [(Action, EvalTree)] -> Result
 abPrune _ currentRes _ _ _ [] = currentRes
 abPrune doneActions currentRes alpha beta depth ((nextAction, nextTree):ts)
@@ -216,24 +233,6 @@ abPrune doneActions currentRes alpha beta depth ((nextAction, nextTree):ts)
             then abPrune doneActions deeperNode alpha deeperNode depth ts
             else abPrune doneActions beta alpha beta depth ts
 
-
-
--- minimaxABFromTree' doneActions (StateTree _ remainingNodes) alpha beta depth = maybePrune alpha beta remainingNodes
---     where
---         maybePrune :: Result -> Result -> [(Action, EvalTree)] -> Result
---         maybePrune a b [] = Result v doneActions
---         maybePrune a b ((nextAction, nextTree):ts)
---             | deeperAlpha >= b  = deeperAlpha
---             | otherwise         = maybePrune deeperAlpha b ts
---             where
---                 deeperAlpha :: Result
---                 deeperAlpha
---                     | even depth = minimaxABFromTree' actions' nextTree a b (depth+1)
---                     | otherwise  = negResult $ minimaxABFromTree' actions' nextTree (negResult b) (negResult a) (depth+1)
---                     where
---                         actions' = doneActions ++ [nextAction]
-
-
 {-
     Putting everything together.
 -}
@@ -246,11 +245,13 @@ depth = 4
 breadth :: Int 
 breadth = 10
 
+-- Get the final result of the Minimax with alpha-beta prunning.
 minimaxABFromTreeScore :: EvalTree -> Int
 minimaxABFromTreeScore tree = v
     where
         (Result v _) = minimaxABFromTree' [] tree (Result (-inf) []) (Result inf []) 0
 
+-- Get the dynamic evaluation of the postion in the game.
 minimaxScore :: Game -> Int
 minimaxScore =
       minimaxABFromTreeScore
@@ -263,8 +264,7 @@ minimaxScore =
 -- Function that combines all the different parts implemented in Part I.
 minimax :: Game -> Action
 minimax =
-    --   minimaxFromTree -- or 'minimaxABFromTree'
-      minimaxABFromTree
+      minimaxABFromTree -- or minimaxFromTree
     . pruneBreadth breadth
     . lowFirst
     . evalTree

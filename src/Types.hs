@@ -7,7 +7,10 @@ module Types where
 
 import Data.Graph ( Graph )
 import Data.Set (Set)
+
+------------------- EXTENSION -----------------------
 import Data.Heap (Heap, Entry)
+-----------------------------------------------------
 
 {-
     Also see module Cell.
@@ -95,9 +98,11 @@ instance Eq Result where
 instance Ord Result where 
     compare (Result x _) (Result y _) = compare x y
 
--- Additional types
+------------------- EXTENSION -----------------------
+-- Additional types for A*
 type Cost = Int
 type History = Set Index
 type Payload = (Cell, Cost, History)
 
 type PriorityQueue = Heap (Entry Int Payload)
+-----------------------------------------------------
