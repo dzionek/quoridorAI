@@ -2,4 +2,31 @@
 
 Is it a good idea to start the game with the Reed opening?
 
-Answer here.
+The easiest way to check whether the Reed opening is good is to check two evaluations:
+
+* The first thing we can check is the static evaluation of our utility. We can check the value of the utility function
+for the player X after playing the Reed opening. Let us call this a static evaluation.
+
+* However, there is also a better way. We can look ahead and check Minimax value for this position. Let us call this
+a dynamic evaluation. 
+
+Using my extension module "Evaluator" for boardSize = 9, and the game input "c3h,e8,f3h,e7" I got the following evaluations:
+* static= -2
+* dynamic= -2
+
+This means that the player Y is 2 "points" ahead of the Reed player after the opening. So, this opening is not very good.
+
+Analyzing the evaluation, it might be better to go for the standard opening (see https://en.wikipedia.org/wiki/Quoridor)
+and begin with e2, e3. If the other player plays:
+* in a good way "e2,e8,e3,e7" the evaluations are static=0, dynamic=0 (drawish)
+* in a bad way "e2,d9,e3,c9" the evaluations are static=2, dynamic=2 (winning for the Player X)
+
+Another way is to arrange a game between Minimax which starts with the Reed opening vs the normal Minimax. If the first Minimax that
+starts with the Reed opening loses, this will mean that the Reed opening is not good.
+
+The file Players/Reed.hs implements a player who always starts with the Reed opening and after doing it continues with Minimax.
+
+I have created a battle between the first Minimax that uses the Reed opening vs the normal Minimax. The final position of this
+game is shown in 'reed.png'.The player X lost, proving that the Reed opening is bad.
+Overall, this opening is a bad one. If the other player starts rushing ahead towards the winning row, the Reed opening
+might be losing.

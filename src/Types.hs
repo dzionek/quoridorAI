@@ -5,7 +5,7 @@
 -}
 module Types where 
 
-import Data.Graph
+import Data.Graph ( Graph )
 import Data.Set (Set)
 import Data.Heap (Heap, Entry)
 
