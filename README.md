@@ -20,7 +20,8 @@ I added a couple of extensions to improve the Quoridor and its AI.
 ### A*
 I have implemented A* available in the `AStar.hs` module. The algorithm uses a priority queue to schedule nodes according to:
 * cost needed to go to that node, plus
-* heuristic - straight vertical distance to a winning row.
+* heuristic - straight vertical distance to a winning row.\
+
 To optimize further, the already visited nodes are stored in a set and checked before visiting again.
 
 The queue is implemented using the `heaps` package from Hackage. This package is included in the cabal file. You may however need to install

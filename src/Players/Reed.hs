@@ -18,6 +18,8 @@ import Players.Minimax (minimaxAction)
 -- [Hint 1: Use the variable 'turn' in Player.]
 -- [Hint 2: Use 'wallTop' to get the walls you need.]
 -- [Hint 3: Don't forget to check that the action is valid using 'validWallAction'.]
+
+-- Play Reed and then Minimax.
 reedPlayerAction :: Board -> [Player] -> String -> Int -> Maybe Action
 reedPlayerAction b ps s r = 
     case t of

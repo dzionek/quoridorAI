@@ -132,25 +132,25 @@ pruneBreadth n (StateTree v ts) =  StateTree v [ (a, pruneBreadth n subTree)
 -- [Hint 2: One way would be to use 'reachableCells' repeatedly.]
 
 -- Basic utility analyzing the shortest path to the winning position.
--- utility :: Game -> Int 
--- utility (Game b players) = - fromJust (aStar playerCell b playerWinningRow)
---     where
---         player = currentPlayer players
---         playerCell = currentCell player
---         playerWinningRow = getWiningRow player
-
--- The improved utility balancing the distances of the current player and the other player.
--- Please use this one to play and analyze.
 utility :: Game -> Int 
-utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
+utility (Game b players) = - fromJust (aStar playerCell b playerWinningRow)
     where
         player = currentPlayer players
         playerCell = currentCell player
         playerWinningRow = getWiningRow player
 
-        opponent = previousPlayer players
-        opponentCell = currentCell opponent
-        opponentWinningRow = getWiningRow opponent
+-- The improved utility balancing the distances of the current player and the other player.
+-- Please use this one to play and analyze.
+-- utility :: Game -> Int 
+-- utility (Game b players) = fromJust (aStar opponentCell b opponentWinningRow) - fromJust (aStar playerCell b playerWinningRow)
+--     where
+--         player = currentPlayer players
+--         playerCell = currentCell player
+--         playerWinningRow = getWiningRow player
+
+--         opponent = previousPlayer players
+--         opponentCell = currentCell opponent
+--         opponentWinningRow = getWiningRow opponent
 
 
 -- Lifting the utility function to work on trees.

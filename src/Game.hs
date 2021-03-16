@@ -11,9 +11,11 @@ import Action
 import Board 
 import Player 
 
--- Additional imports
+--------------- EXTENSION ----------------
+-- Additional imports for playable
 import Data.Maybe ( fromJust, isJust )
 import AStar ( aStar, getWiningRow )
+-------------------------------------------
 
 {-
     'performAction' and helpers.
@@ -46,7 +48,7 @@ validSteps g@(Game b ps) = map Move (filter (validStepAction g) steps)
 ---------------------------------------------------------------
 -------------------------- EXTENSION --------------------------
 ---------------------------------------------------------------
-
+-- Check if both players are able to finish the game, i.e. there is a path from any of them to their winning posiiton.
 playable :: Game -> Bool
 playable (Game b players) =
     isJust (aStar opponentCell b opponentWinningRow) &&

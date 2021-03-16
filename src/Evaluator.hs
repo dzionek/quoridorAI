@@ -2,7 +2,7 @@
     Module: Evaluator
 
     EXTENSION
-    Used to evaluate the concrete position specified as an input.
+    Used to evaluate the concrete final position specified as an input.
 -}
 module Evaluator where
 
@@ -17,7 +17,7 @@ import Types
 import Game (currentPlayer, performAction)
 import Action (wallTop, wallRight)
 
-
+-- Check if the string are actions, i.e. they represent a cell in the board and have valid length or format ('v' or 'h' for walls).
 verifyActionsFormat :: [String] -> Bool
 verifyActionsFormat ss = ofSizeTwoOrThree ss && inBoards ss && all validWalls ss
     where
@@ -27,7 +27,7 @@ verifyActionsFormat ss = ofSizeTwoOrThree ss && inBoards ss && all validWalls ss
             | length s == 3 = s!!2 == 'h' || s!!2 == 'v'
             | otherwise = True
 
-
+-- Give the action represented by the string. E.g. 'a1' for the current player must move it to this position.
 createAction :: String -> Cell -> Action
 createAction s c
     | length s == 2 = Move (c, c')
@@ -38,6 +38,7 @@ createAction s c
     where
         c' = (head s, digitToInt (s!!1))
 
+-- Give the static and dynamic evaluations of the final position.
 checkEvaluation :: [String] -> Game -> Maybe (Int, Int)
 checkEvaluation commands g =
     case g' of
@@ -53,16 +54,17 @@ checkEvaluation commands g =
         action = createAction (head commands) playerCell
         g' = performAction g action
 
+-- Run the evaluator.
 main :: IO ()
 main = do {
-    putStrLn "Provide a position in the game in the comma-separated algebraic format.";
+    putStrLn "Provide a (partial) game in the comma-separated algebraic format.";
     gameLine <- getLine;
     let actionSequence = splitOn "," gameLine in
         if not $ verifyActionsFormat actionSequence
             then do { putStrLn "The given string is in invalid format or out of the board. Try again!"; main }
             else 
                 case checkEvaluation actionSequence g of
-                    Just score -> putStrLn ("The evaluation of this position is: static=" ++ show (fst score) ++ " dynamic=" ++ show (snd score) ++ ".")
+                    Just score -> putStrLn ("The evaluation of this final position is: static=" ++ show (fst score) ++ " dynamic=" ++ show (snd score) ++ ".")
                     Nothing -> putStrLn "This is not a valid game."
 }
     where

@@ -6,12 +6,12 @@ module AStar where
 
 import qualified Data.Heap as H
 import qualified Data.Set as Set
-import Debug.Trace ( trace )
 
 import Types
 import Cell ( cellToIndex )
 import Board ( reachableCells )
 
+-- Get a winning row for the given player.
 getWiningRow :: Player -> Row
 getWiningRow p = snd $ head $ winningPositions p
 
@@ -29,6 +29,7 @@ aStar cell = aStar' Nothing queue
         queue :: PriorityQueue
         queue = H.singleton $ H.Entry 0 (cell, 0, Set.empty)
 
+-- Extract minimums until a wininng position is found.
 aStar' :: Maybe Cost -> PriorityQueue -> Board -> Row -> Maybe Cost
 aStar' (Just cost) _ _ _ = Just cost
 aStar' Nothing queue b winningRow
@@ -42,7 +43,8 @@ aStar' Nothing queue b winningRow
             else aStar' Nothing (addNextNodes (col, row) dist history (H.deleteMin queue) b winningRow) b winningRow
     where
         ((col, row), dist, history) = H.payload $ H.minimum queue
-        
+
+-- Add all reachable cells to the priority queue.
 addNextNodes :: Cell -> Cost -> History -> PriorityQueue -> Board -> Row -> PriorityQueue
 addNextNodes cell cost history queue b winningRow = foldr H.insert queue nextEntries
     where
