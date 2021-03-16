@@ -18,7 +18,7 @@ There are two test suites:
 I added a couple of extensions to improve the Quoridor and its AI.
 
 ### A*
-I have implemented A* to find in the `AStar.hs` module. The algorithm uses a priority queue to schedule nodes according to:
+I have implemented A* available in the `AStar.hs` module. The algorithm uses a priority queue to schedule nodes according to:
 * cost needed to go to that node, plus
 * heuristic - straight vertical distance to a winning row.
 To optimize further, the already visited nodes are stored in a set and checked before visiting again.
@@ -30,7 +30,7 @@ it on your machine:
 cabal install heaps
 ```
 
-My implementation adds additional types in `Types.hs`.
+My implementation adds additional types in `Types.hs` and is used in the utility function.
 ### Unit tests for A*
 To check the correctness of my A* implementation (in particualr its optimality), I added a new test suite with unit tests.
 Check `tests/Extension/AStarTest.hs` and run:
