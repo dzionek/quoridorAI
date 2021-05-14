@@ -1,6 +1,9 @@
-# Quoridor in Haskell 
+# QuoridorAI in Haskell 
 
-### Installation instructions 
+Artificial Intelligence engine playing [Quoridor](https://en.wikipedia.org/wiki/Quoridor).
+The project was developed as coursework of [Reasoning and Agents](http://www.drps.ed.ac.uk/18-19/dpt/cxinfr08010.htm) course at the University of Edinburgh. It received first prize in the class competition for the best coursework.
+
+## Installation instructions 
 
 You need GHC, the Cabal build system and the Stack tool. See [https://www.haskell.org/platform/](https://www.haskell.org/platform/). 
 
